@@ -1,0 +1,239 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║       🔧 SOLUCIÓN URGENTE - CAMBIAR START COMMAND EN RENDER              ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEMA:
+---------
+Render está usando: gunicorn app:app  ❌
+Debe usar: gunicorn optimiza_limpieza.wsgi:application  ✅
+
+CAUSA:
+------
+El servicio en Render fue creado con configuración manual que sobreescribe
+el render.yaml. Necesitas cambiar el comando MANUALMENTE en el dashboard.
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║             ✅ SOLUCIÓN EN 5 PASOS (2 MINUTOS)                            ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+PASO 1: Ir al Dashboard de Render
+----------------------------------
+🔗 https://dashboard.render.com
+
+Inicia sesión con tu cuenta
+
+
+PASO 2: Seleccionar tu Servicio
+--------------------------------
+• Haz clic en tu servicio "optimiza-limpieza"
+• Verás el panel de control del servicio
+
+
+PASO 3: Ir a Settings (Configuración)
+--------------------------------------
+• En el menú izquierdo, haz clic en "Settings"
+• Desplázate hacia abajo
+
+
+PASO 4: Cambiar el Start Command
+---------------------------------
+Busca la sección "Start Command"
+
+BORRA esto:
+❌ gunicorn app:app
+
+ESCRIBE esto:
+✅ gunicorn optimiza_limpieza.wsgi:application --bind 0.0.0.0:$PORT
+
+• Haz clic en "Save Changes"
+
+
+PASO 5: Hacer Deploy Manual
+----------------------------
+• Arriba, haz clic en "Manual Deploy"
+• Selecciona "Deploy latest commit"
+• Espera 2-3 minutos
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    📸 GUÍA VISUAL PASO A PASO                             ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+1. Dashboard Principal:
+   [Dashboard] → [Tu servicio: optimiza-limpieza]
+
+2. Panel del Servicio:
+   [Events] [Logs] [Metrics] [Shell] → [Settings] ← CLICK AQUÍ
+
+3. En Settings, busca:
+   
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Build & Deploy                                              │
+   ├─────────────────────────────────────────────────────────────┤
+   │                                                             │
+   │ Build Command:                                              │
+   │ [pip install -r requirements.txt && python manage.py...]   │
+   │                                                             │
+   │ Start Command:                                              │
+   │ [gunicorn app:app]  ← CAMBIAR ESTO                         │
+   │                                                             │
+   │ [Save Changes]                                              │
+   └─────────────────────────────────────────────────────────────┘
+
+4. Cambia a:
+   
+   ┌─────────────────────────────────────────────────────────────┐
+   │ Start Command:                                              │
+   │ [gunicorn optimiza_limpieza.wsgi:application --bind 0...] │
+   │                                                             │
+   │ [Save Changes] ← CLICK AQUÍ                                │
+   └─────────────────────────────────────────────────────────────┘
+
+5. Arriba en el menú:
+   [Manual Deploy] ← CLICK AQUÍ → [Deploy latest commit]
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║               ⚙️ CONFIGURACIÓN COMPLETA RECOMENDADA                       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Si quieres configurar TODO correctamente en Render Settings:
+
+Build Command:
+--------------
+pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+
+Start Command:
+--------------
+gunicorn optimiza_limpieza.wsgi:application --bind 0.0.0.0:$PORT
+
+Environment Variables:
+----------------------
+SECRET_KEY = [genera una nueva - ver abajo]
+DEBUG = False
+ALLOWED_HOSTS = .onrender.com
+PYTHON_VERSION = 3.11.4
+
+Para generar SECRET_KEY:
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                 🎯 VERIFICAR QUE FUNCIONA                                 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Después de hacer los cambios y deploy:
+
+1. Ve a "Logs" en Render
+2. Deberías ver:
+
+   ✅ ==> Building...
+   ✅ ==> Installing dependencies...
+   ✅ ==> Starting gunicorn...
+   ✅ [INFO] Listening at: http://0.0.0.0:10000  ← ¡ÉXITO!
+   ✅ [INFO] Using worker: sync
+
+3. Abre tu aplicación:
+   https://optimiza-limpieza.onrender.com
+
+4. ¡Debería cargar el dashboard!
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║              ⚠️ SI SIGUE FALLANDO DESPUÉS DE ESTO                         ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Error: "DisallowedHost at /"
+-----------------------------
+Solución: En Environment Variables, agrega:
+ALLOWED_HOSTS = .onrender.com
+
+Error: "Static files not found"
+--------------------------------
+Solución: Verifica que Build Command incluya:
+python manage.py collectstatic --noinput
+
+Error: 500 Internal Server Error
+---------------------------------
+Solución: Temporalmente pon:
+DEBUG = True
+Luego ve a tu app para ver el error específico
+Después vuelve a poner DEBUG = False
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                   📋 CHECKLIST COMPLETO                                   ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Antes de hacer el deploy, verifica que tengas:
+
+Settings → Build & Deploy:
+☐ Build Command correcto
+☐ Start Command correcto (gunicorn optimiza_limpieza.wsgi:application)
+
+Settings → Environment:
+☐ SECRET_KEY configurada
+☐ DEBUG = False
+☐ ALLOWED_HOSTS = .onrender.com
+☐ PYTHON_VERSION = 3.11.4
+
+Si agregaste PostgreSQL:
+☐ DATABASE_URL conectada al servicio
+
+Luego:
+☐ Manual Deploy → Deploy latest commit
+☐ Esperar 2-3 minutos
+☐ Verificar en Logs que diga "Listening at"
+☐ Abrir la URL de tu app
+☐ ¡Funciona!
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                  💡 ¿POR QUÉ PASA ESTO?                                   ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Explicación técnica:
+
+Cuando creas un servicio MANUALMENTE en Render (sin render.yaml desde el
+inicio), Render guarda esas configuraciones en su base de datos. Estas
+configuraciones SOBREESCRIBEN lo que está en render.yaml.
+
+El render.yaml solo se usa cuando:
+1. Creas el servicio usando "Deploy from GitHub" Y
+2. Render detecta el render.yaml ANTES de crear el servicio
+
+Como tu servicio ya existe con configuración manual, debes:
+• Cambiar la configuración en el dashboard manualmente, O
+• Eliminar el servicio y crear uno nuevo desde cero con render.yaml
+
+La primera opción (cambio manual) es MÁS RÁPIDA y NO pierdes nada.
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║               🎉 RESUMEN: CAMBIO RÁPIDO EN 2 MINUTOS                      ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+1. Dashboard Render → Tu servicio → Settings
+2. Cambiar Start Command a: gunicorn optimiza_limpieza.wsgi:application --bind 0.0.0.0:$PORT
+3. Save Changes
+4. Manual Deploy → Deploy latest commit
+5. Esperar 2-3 minutos
+6. ¡Listo! Tu app funcionará
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    🆘 NECESITAS AYUDA?                                    ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Si después de seguir estos pasos SIGUE sin funcionar:
+
+1. Toma screenshot del error en Logs
+2. Verifica que el Start Command esté exactamente como se muestra
+3. Verifica que ALLOWED_HOSTS esté configurado
+4. Si todo falla, considera eliminar el servicio y crear uno nuevo
+
+═══════════════════════════════════════════════════════════════════════════
+
+¡Haz estos cambios y tu aplicación funcionará inmediatamente! 🚀
+
+═══════════════════════════════════════════════════════════════════════════
+
