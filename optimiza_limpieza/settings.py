@@ -135,8 +135,20 @@ SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 # DEBUG desde variable de entorno
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Hosts permitidos
+# Hosts permitidos - Configuración mejorada para Render
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# En producción, agregar dominios de Render automáticamente
+if not DEBUG or os.environ.get('RENDER'):
+    ALLOWED_HOSTS.extend([
+        'optimizacionflotas.onrender.com',  # Tu dominio específico
+        '.onrender.com',  # Wildcard para cualquier subdominio de render
+        '*',  # Temporal para debugging - QUITAR en producción final
+    ])
+
+# Limpiar lista (eliminar duplicados y espacios)
+ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
+ALLOWED_HOSTS = list(set(ALLOWED_HOSTS))
 
 # Base de datos - Usar PostgreSQL en producción si está disponible
 if 'DATABASE_URL' in os.environ:
