@@ -1,0 +1,151 @@
+{% extends 'solver_app/base.html' %}
+
+{% block title %}Flota de Camiones{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4">
+            <i class="bi bi-truck-flatbed"></i> Flota de Camiones
+        </h1>
+        <p class="lead text-muted">Vehículos disponibles para la recolección</p>
+    </div>
+</div>
+
+<!-- Estadísticas de camiones -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="icon text-primary">
+                <i class="bi bi-truck"></i>
+            </div>
+            <div class="number">{{ stats.total }}</div>
+            <div class="label">Total de Camiones</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="icon text-success">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="number">{{ stats.capacidad_total|floatformat:0 }}</div>
+            <div class="label">Capacidad Total (kg)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="icon text-info">
+                <i class="bi bi-calculator"></i>
+            </div>
+            <div class="number">{{ stats.capacidad_promedio|floatformat:2 }}</div>
+            <div class="label">Capacidad Promedio (kg)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de camiones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-ul"></i> Detalle de Camiones
+                {% if hay_asignaciones %}
+                <span class="badge bg-success float-end">Con datos de uso</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-truck"></i> Placa</th>
+                                <th><i class="bi bi-box-seam"></i> Capacidad (kg)</th>
+                                {% if hay_asignaciones %}
+                                <th><i class="bi bi-clipboard-check"></i> Veces Usado</th>
+                                <th><i class="bi bi-arrow-left-right"></i> Distancia Total (km)</th>
+                                <th><i class="bi bi-box"></i> Carga Total (kg)</th>
+                                <th>Utilización Promedio</th>
+                                {% else %}
+                                <th>Estado</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for uso in camiones_con_uso %}
+                            <tr>
+                                <td>
+                                    <strong>{{ uso.camion.placa }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ uso.camion.capacidad_kg|floatformat:0 }} kg
+                                    </span>
+                                </td>
+                                {% if hay_asignaciones %}
+                                <td>
+                                    {% if uso.veces_usado > 0 %}
+                                        <span class="badge bg-success">{{ uso.veces_usado }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ uso.distancia_total|floatformat:2 }}</td>
+                                <td>{{ uso.carga_total|floatformat:2 }}</td>
+                                <td>
+                                    {% if uso.veces_usado > 0 %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar 
+                                            {% if uso.utilizacion_promedio < 60 %}bg-warning
+                                            {% elif uso.utilizacion_promedio < 90 %}bg-success
+                                            {% else %}bg-danger
+                                            {% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ uso.utilizacion_promedio }}%"
+                                            aria-valuenow="{{ uso.utilizacion_promedio }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100">
+                                            {{ uso.utilizacion_promedio }}%
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                {% else %}
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-clock"></i> Disponible
+                                    </span>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if hay_asignaciones %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>Nota:</strong> La utilización promedio indica qué porcentaje de la capacidad del camión se usa en promedio por viaje.
+            Una utilización entre 70-90% se considera óptima.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-3">
+    <div class="col-12">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+

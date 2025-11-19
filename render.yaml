@@ -1,0 +1,26 @@
+databases:
+  - name: optimiza_limpieza_db
+    databaseName: optimiza_limpieza
+    user: optimiza_user
+    plan: free
+
+services:
+  - type: web
+    name: optimiza-limpieza
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn optimiza_limpieza.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: optimiza_limpieza_db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: False
+    healthCheckPath: /
+

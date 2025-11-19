@@ -1,0 +1,168 @@
+{% extends 'solver_app/base.html' %}
+
+{% block title %}Resultados de Optimización{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4">
+            <i class="bi bi-graph-up"></i> Resultados de Optimización
+        </h1>
+        <p class="lead text-muted">Asignaciones óptimas de camiones a rutas</p>
+    </div>
+</div>
+
+<!-- Estadísticas generales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="icon text-primary">
+                <i class="bi bi-clipboard-check"></i>
+            </div>
+            <div class="number">{{ stats.total_asignaciones }}</div>
+            <div class="label">Total Asignaciones</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="icon text-success">
+                <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <div class="number">{{ stats.distancia_total|floatformat:2 }}</div>
+            <div class="label">Distancia Total (km)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="icon text-warning">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div class="number">{{ stats.carga_total|floatformat:0 }}</div>
+            <div class="label">Carga Total (kg)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="icon text-info">
+                <i class="bi bi-truck"></i>
+            </div>
+            <div class="number">{{ stats.camiones_utilizados }}</div>
+            <div class="label">Camiones Utilizados</div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas por turno -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock"></i> Estadísticas por Turno
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for turno, data in stats_por_turno.items %}
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <span class="badge bg-primary">{{ turno }}</span>
+                                </h5>
+                                <ul class="list-unstyled mt-3">
+                                    <li><i class="bi bi-check-circle text-success"></i> <strong>{{ data.count }}</strong> rutas</li>
+                                    <li><i class="bi bi-arrow-left-right text-info"></i> <strong>{{ data.distancia|floatformat:2 }}</strong> km</li>
+                                    <li><i class="bi bi-box-seam text-warning"></i> <strong>{{ data.carga|floatformat:0 }}</strong> kg</li>
+                                    <li><i class="bi bi-truck text-primary"></i> <strong>{{ data.camiones }}</strong> camiones</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Asignaciones por turno -->
+{% for turno, asignaciones in asignaciones_por_turno.items %}
+{% if asignaciones %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock"></i> Turno: {{ turno }}
+                <span class="badge bg-primary float-end">{{ asignaciones|length }} asignaciones</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-truck"></i> Camión</th>
+                                <th><i class="bi bi-map"></i> Zona</th>
+                                <th>Sector</th>
+                                <th><i class="bi bi-arrow-left-right"></i> Distancia (km)</th>
+                                <th><i class="bi bi-box-seam"></i> Carga (kg)</th>
+                                <th>Capacidad (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asig in asignaciones %}
+                            <tr>
+                                <td>
+                                    <strong>{{ asig.camion_asignado.placa }}</strong>
+                                    <br>
+                                    <small class="text-muted">Cap: {{ asig.camion_asignado.capacidad_kg|floatformat:0 }} kg</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">Zona {{ asig.ruta_asignada.id_zona_barrido }}</span>
+                                </td>
+                                <td>Sector {{ asig.ruta_asignada.id_sector }}</td>
+                                <td>{{ asig.costo_distancia_km|floatformat:2 }}</td>
+                                <td>{{ asig.carga_kg|floatformat:2 }}</td>
+                                <td>
+                                    {% widthratio asig.carga_kg asig.camion_asignado.capacidad_kg 100 as porcentaje %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar 
+                                            {% if porcentaje < 50 %}bg-success
+                                            {% elif porcentaje < 80 %}bg-warning
+                                            {% else %}bg-danger
+                                            {% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ porcentaje }}%"
+                                            aria-valuenow="{{ porcentaje }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100">
+                                            {{ porcentaje }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Botones de acción -->
+<div class="row">
+    <div class="col-12">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+        <form method="post" action="{% url 'limpiar_asignaciones' %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar todas las asignaciones?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Limpiar Resultados
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

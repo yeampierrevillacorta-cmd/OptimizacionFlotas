@@ -1,0 +1,213 @@
+{% extends 'solver_app/base.html' %}
+
+{% block title %}Dashboard - Optimización de Rutas{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+        <p class="lead text-muted">Sistema de Optimización de Rutas de Limpieza</p>
+    </div>
+</div>
+
+<!-- Estadísticas principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-primary">
+                <i class="bi bi-map"></i>
+            </div>
+            <div class="number">{{ total_rutas }}</div>
+            <div class="label">Rutas Disponibles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-success">
+                <i class="bi bi-truck-flatbed"></i>
+            </div>
+            <div class="number">{{ total_camiones }}</div>
+            <div class="label">Camiones en Flota</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-warning">
+                <i class="bi bi-clipboard-check"></i>
+            </div>
+            <div class="number">{{ total_asignaciones }}</div>
+            <div class="label">Asignaciones Actuales</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-info">
+                <i class="bi bi-recycle"></i>
+            </div>
+            <div class="number">{{ stats_rutas.residuos_totales|floatformat:0 }}</div>
+            <div class="label">Kg de Residuos</div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones principales -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gear-fill"></i> Acciones
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-lightning-charge"></i> Ejecutar Optimización</h5>
+                        <p class="text-muted">
+                            Ejecuta el algoritmo de optimización para asignar camiones a rutas de forma óptima.
+                        </p>
+                        <form method="post" action="{% url 'ejecutar_solver' %}" onsubmit="return confirm('¿Estás seguro de ejecutar la optimización? Esto puede tomar algunos minutos.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-play-circle"></i> Ejecutar Solver
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="bi bi-trash"></i> Limpiar Resultados</h5>
+                        <p class="text-muted">
+                            Elimina todas las asignaciones actuales para ejecutar una nueva optimización.
+                        </p>
+                        <form method="post" action="{% url 'limpiar_asignaciones' %}" onsubmit="return confirm('¿Estás seguro de eliminar todas las asignaciones?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg" {% if not hay_asignaciones %}disabled{% endif %}>
+                                <i class="bi bi-x-circle"></i> Limpiar Asignaciones
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalles de Rutas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-map"></i> Información de Rutas
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Total de Rutas:</strong></td>
+                            <td>{{ total_rutas }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Distancia Total:</strong></td>
+                            <td>{{ stats_rutas.distancia_total|floatformat:2 }} km</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Residuos Totales:</strong></td>
+                            <td>{{ stats_rutas.residuos_totales|floatformat:2 }} kg</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Distancia Promedio:</strong></td>
+                            <td>{{ stats_rutas.distancia_promedio|floatformat:2 }} km</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Residuos Promedio:</strong></td>
+                            <td>{{ stats_rutas.residuos_promedio|floatformat:2 }} kg</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{% url 'listar_rutas' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-right"></i> Ver todas las rutas
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-truck-flatbed"></i> Información de Camiones
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td><strong>Total de Camiones:</strong></td>
+                            <td>{{ total_camiones }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Capacidad Total:</strong></td>
+                            <td>{{ stats_camiones.capacidad_total|floatformat:0 }} kg</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Capacidad Promedio:</strong></td>
+                            <td>{{ stats_camiones.capacidad_promedio|floatformat:2 }} kg</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{% url 'listar_camiones' %}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-arrow-right"></i> Ver todos los camiones
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados de Optimización -->
+{% if hay_asignaciones %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-check-circle"></i> Última Optimización
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ stats_asignaciones.distancia_total|floatformat:2 }} km</h4>
+                        <small class="text-muted">Distancia Total</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ stats_asignaciones.carga_total|floatformat:0 }} kg</h4>
+                        <small class="text-muted">Carga Total</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ stats_asignaciones.camiones_utilizados }}</h4>
+                        <small class="text-muted">Camiones Utilizados</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ stats_asignaciones.eficiencia }}%</h4>
+                        <small class="text-muted">Eficiencia</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6>Asignaciones por Turno:</h6>
+                <div class="row mt-3">
+                    {% for turno, count in stats_asignaciones.asignaciones_por_turno.items %}
+                    <div class="col-md-4">
+                        <span class="badge bg-info badge-custom">{{ turno }}: {{ count }} rutas</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'resultados_optimizacion' %}" class="btn btn-success">
+                        <i class="bi bi-eye"></i> Ver Resultados Completos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,118 @@
+{% extends 'solver_app/base.html' %}
+
+{% block title %}Rutas Disponibles{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4">
+            <i class="bi bi-map"></i> Rutas de Limpieza
+        </h1>
+        <p class="lead text-muted">Zonas de barrido disponibles</p>
+    </div>
+</div>
+
+<!-- Estadísticas de rutas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-primary">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <div class="number">{{ stats.total }}</div>
+            <div class="label">Total de Rutas</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-success">
+                <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <div class="number">{{ stats.distancia_total|floatformat:2 }}</div>
+            <div class="label">Distancia Total (km)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-warning">
+                <i class="bi bi-recycle"></i>
+            </div>
+            <div class="number">{{ stats.residuos_totales|floatformat:0 }}</div>
+            <div class="label">Residuos Totales (kg)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="icon text-info">
+                <i class="bi bi-calculator"></i>
+            </div>
+            <div class="number">{{ stats.distancia_promedio|floatformat:2 }}</div>
+            <div class="label">Distancia Promedio (km)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de rutas por sector -->
+{% for sector, rutas_sector in sectores.items %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-grid-3x3-gap"></i> Sector {{ sector }}
+                <span class="badge bg-primary float-end">{{ rutas_sector|length }} rutas</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Zona</th>
+                                <th><i class="bi bi-arrow-left-right"></i> Distancia (km)</th>
+                                <th><i class="bi bi-recycle"></i> Residuos (kg)</th>
+                                <th>Densidad (kg/km)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ruta in rutas_sector %}
+                            <tr>
+                                <td>
+                                    <strong>Zona {{ ruta.id_zona_barrido }}</strong>
+                                </td>
+                                <td>{{ ruta.distancia_km|floatformat:2 }}</td>
+                                <td>{{ ruta.residuos_kg|floatformat:2 }}</td>
+                                <td>
+                                    {% widthratio ruta.residuos_kg ruta.distancia_km 1 as densidad %}
+                                    {{ densidad|floatformat:2 }}
+                                </td>
+                                <td>
+                                    {% if ruta.asignacionoptima_set.exists %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Asignada
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-clock"></i> Pendiente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="row">
+    <div class="col-12">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
