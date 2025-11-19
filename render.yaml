@@ -7,10 +7,10 @@ databases:
 services:
   - type: web
     name: optimiza-limpieza
-    env: python
+    runtime: python
     plan: free
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn optimiza_limpieza.wsgi:application"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn optimiza_limpieza.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -19,8 +19,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: "3.11.4"
       - key: DEBUG
-        value: False
-    healthCheckPath: /
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
 

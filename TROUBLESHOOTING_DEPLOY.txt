@@ -1,0 +1,215 @@
+=============================================================================
+🔧 SOLUCIÓN DE PROBLEMAS DE DESPLIEGUE
+=============================================================================
+
+PROBLEMA 1: Error "Could not find a version that satisfies requirement ortools"
+-----------------------------------------------------------------------------
+CAUSA: La versión específica de OR-Tools no está disponible en PyPI
+
+SOLUCIÓN: Ya actualizado en requirements.txt
+- Cambio: ortools==9.11.4210 → ortools>=9.12.4544
+- Esto permite usar versiones compatibles más recientes
+
+ACCIÓN: 
+1. Commitea el nuevo requirements.txt:
+   git add requirements.txt
+   git commit -m "Fix: Actualizar versión de ortools"
+   git push origin main
+
+2. Render redesplegará automáticamente
+
+=============================================================================
+
+PROBLEMA 2: Error "DisallowedHost"
+-----------------------------------------------------------------------------
+CAUSA: El dominio de Render no está en ALLOWED_HOSTS
+
+SOLUCIÓN: Actualizar settings.py
+
+ACCIÓN:
+1. Abre optimiza_limpieza/settings.py
+2. Busca ALLOWED_HOSTS y actualiza:
+
+   ALLOWED_HOSTS = [
+       'localhost',
+       '127.0.0.1',
+       '.onrender.com',  # Agrega esto
+       '.up.railway.app',  # Si usas Railway
+       '.pythonanywhere.com',  # Si usas PythonAnywhere
+   ]
+
+3. Commit y push
+
+=============================================================================
+
+PROBLEMA 3: Error "No module named 'ortools'"
+-----------------------------------------------------------------------------
+CAUSA: OR-Tools no se instaló correctamente (es una librería pesada)
+
+SOLUCIÓN TEMPORAL (si persiste):
+1. Precalcula los resultados localmente
+2. Guarda los resultados en fixtures
+3. Carga fixtures en producción en lugar de ejecutar el solver
+
+CÓDIGO:
+# Exportar resultados locales
+python manage.py dumpdata solver_app.AsignacionOptima > fixtures/resultados.json
+
+# En producción, cargar:
+python manage.py loaddata fixtures/resultados.json
+
+=============================================================================
+
+PROBLEMA 4: Build muy lento o timeout
+-----------------------------------------------------------------------------
+CAUSA: OR-Tools tarda mucho en compilarse
+
+SOLUCIÓN:
+1. Usar versión precompilada (ya lo hace requirements.txt)
+2. Aumentar tiempo de build en plataforma:
+   - Render: Se ajusta automáticamente
+   - Railway: Configurar en railway.json (ya incluido)
+
+=============================================================================
+
+PROBLEMA 5: Base de datos se resetea en cada deploy
+-----------------------------------------------------------------------------
+CAUSA: Usando SQLite en producción (se borra en deploys)
+
+SOLUCIÓN: Usar PostgreSQL (recomendado)
+
+ACCIÓN:
+1. En Render/Railway, agrega PostgreSQL desde el dashboard
+2. La variable DATABASE_URL se configura automáticamente
+3. El código ya está preparado para usar PostgreSQL (settings_production.py)
+
+=============================================================================
+
+PROBLEMA 6: Archivos estáticos (CSS/JS) no cargan
+-----------------------------------------------------------------------------
+CAUSA: No se ejecutó collectstatic
+
+SOLUCIÓN: Ya incluido en build.sh
+
+VERIFICAR:
+1. Que build.sh tenga permisos de ejecución:
+   git add build.sh
+   git update-index --chmod=+x build.sh
+   git commit -m "Fix: Permisos build.sh"
+   git push
+
+2. O agregar en render.yaml:
+   buildCommand: "chmod +x build.sh && ./build.sh"
+
+=============================================================================
+
+PROBLEMA 7: Error 500 en producción
+-----------------------------------------------------------------------------
+CAUSA: DEBUG=False oculta errores
+
+SOLUCIÓN TEMPORAL (solo para diagnosticar):
+1. En Render dashboard → Environment
+2. Agrega: DEBUG=True
+3. Guarda y redespliega
+4. Ver error específico
+5. ¡IMPORTANTE! Volver a poner DEBUG=False después
+
+=============================================================================
+
+PROBLEMA 8: "load_data" falla en producción
+-----------------------------------------------------------------------------
+CAUSA: Archivos CSV no están en el repositorio o ruta incorrecta
+
+SOLUCIÓN:
+1. Verifica que /data/*.csv estén en Git:
+   git add data/
+   git commit -m "Add: Archivos de datos"
+   git push
+
+2. O modifica build.sh para hacerlo opcional:
+   python manage.py load_data || echo "Datos ya cargados"
+
+=============================================================================
+
+PASOS PARA DESPLEGAR CORRECTAMENTE EN RENDER:
+=============================================================================
+
+1. PREPARA TU REPOSITORIO:
+   git add .
+   git commit -m "Ready for Render deploy"
+   git push origin main
+
+2. EN RENDER.COM:
+   - New → Web Service
+   - Conecta tu repo GitHub
+   - Render detecta render.yaml automáticamente
+   - Agrega PostgreSQL: New → Database → PostgreSQL
+   - En Environment, verifica que DATABASE_URL esté conectada
+
+3. ESPERA EL BUILD:
+   - Primera vez puede tardar 5-10 minutos
+   - OR-Tools es pesado, es normal
+
+4. VERIFICA:
+   - Ve a tu URL: https://optimiza-limpieza.onrender.com
+   - Debe mostrar el dashboard
+   - Prueba ejecutar el solver
+
+=============================================================================
+
+COMANDOS ÚTILES PARA DEBUGGING:
+=============================================================================
+
+# Ver logs en Render
+(En dashboard → Logs)
+
+# Probar requirements localmente
+pip install -r requirements.txt
+
+# Probar build.sh localmente
+bash build.sh
+
+# Verificar migraciones
+python manage.py showmigrations
+
+# Crear superusuario en producción
+python manage.py createsuperuser
+
+=============================================================================
+
+CONFIGURACIÓN RECOMENDADA PARA RENDER:
+=============================================================================
+
+Environment Variables:
+- SECRET_KEY: (generado automáticamente)
+- DEBUG: False
+- ALLOWED_HOSTS: .onrender.com
+- DATABASE_URL: (conectado a PostgreSQL)
+
+Build Command:
+./build.sh
+
+Start Command:
+gunicorn optimiza_limpieza.wsgi:application
+
+=============================================================================
+
+¿SIGUE SIN FUNCIONAR?
+=============================================================================
+
+1. Revisa logs completos en Render dashboard
+2. Verifica que todos los archivos estén en GitHub
+3. Usa la versión simple de requirements.txt (sin versiones específicas)
+4. Contacta soporte de Render: https://render.com/docs/support
+
+=============================================================================
+
+CONTACTO Y RECURSOS:
+=============================================================================
+
+- Documentación Render Django: https://render.com/docs/deploy-django
+- Django Deployment Checklist: https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+- OR-Tools Docs: https://developers.google.com/optimization
+
+=============================================================================
+
