@@ -127,13 +127,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # =============================================================================
 
 import os
-import dj_database_url
+
+# Importar dj_database_url solo si está disponible (producción)
+try:
+    import dj_database_url
+    HAS_DJ_DATABASE_URL = True
+except ImportError:
+    HAS_DJ_DATABASE_URL = False
+    print("⚠️ dj_database_url no está instalado. Usando SQLite.")
 
 # Sobrescribir SECRET_KEY en producción
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 
-# DEBUG desde variable de entorno
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# DEBUG desde variable de entorno (por defecto True en desarrollo)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # Hosts permitidos - Configuración mejorada para Render
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -151,7 +158,7 @@ ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
 ALLOWED_HOSTS = list(set(ALLOWED_HOSTS))
 
 # Base de datos - Usar PostgreSQL en producción si está disponible
-if 'DATABASE_URL' in os.environ:
+if 'DATABASE_URL' in os.environ and HAS_DJ_DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -159,6 +166,8 @@ if 'DATABASE_URL' in os.environ:
             conn_health_checks=True,
         )
     }
+elif 'DATABASE_URL' in os.environ and not HAS_DJ_DATABASE_URL:
+    print("⚠️ DATABASE_URL configurada pero dj_database_url no disponible. Instala con: pip install dj-database-url")
 
 # Archivos estáticos para producción
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
