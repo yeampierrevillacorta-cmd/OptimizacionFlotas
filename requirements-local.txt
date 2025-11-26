@@ -1,0 +1,29 @@
+# Requirements para desarrollo local (sin OR-Tools si da problemas)
+# Optimización de Rutas de Limpieza - Pueblo Libre
+
+# Framework web
+Django>=5.0,<5.3
+
+# Manipulación de datos
+pandas>=2.2.0,<3.0
+
+# Optimización lineal con Google OR-Tools (comentar si Python 3.14+)
+# ortools>=9.12.4544
+
+# Base de datos para producción con PostgreSQL
+psycopg2-binary>=2.9.0
+dj-database-url>=2.0.0
+
+# Servidor de producción
+gunicorn>=21.0.0
+
+# Archivos estáticos en producción
+whitenoise>=6.0.0
+
+# Variables de entorno
+python-decouple>=3.8
+
+# Utilidades adicionales
+python-dateutil>=2.9.0
+pytz>=2024.1
+

@@ -3,7 +3,17 @@ Motor de Optimización para Asignación de Rutas de Limpieza
 Utiliza programación lineal con Google OR-Tools para asignar camiones a rutas de manera óptima.
 """
 
-from ortools.linear_solver import pywraplp
+# Importar OR-Tools de manera opcional (para desarrollo local sin OR-Tools)
+try:
+    from ortools.linear_solver import pywraplp
+    ORTOOLS_AVAILABLE = True
+except ImportError:
+    pywraplp = None
+    ORTOOLS_AVAILABLE = False
+    import warnings
+    warnings.warn("WARNING: OR-Tools no esta disponible. El solver no funcionara localmente. "
+                  "Esto es normal en Python 3.14+. En produccion (Render) usa Python 3.11.")
+
 from solver_app.models import Ruta, Camion, AsignacionOptima
 from django.db.models import Sum
 import logging
@@ -34,6 +44,9 @@ class SolverRutasLimpieza:
         
     def crear_modelo(self):
         """Crea el modelo de programación lineal con OR-Tools"""
+        if not ORTOOLS_AVAILABLE:
+            raise Exception("OR-Tools no está disponible. Instala OR-Tools o usa Python 3.11-3.13 en producción.")
+        
         logger.info("Creando modelo de optimización con Google OR-Tools...")
         
         # Crear el solver (SCIP es el solver de código abierto para MIP)
